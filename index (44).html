@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Applications Mind Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: 3D stage on the left (weeks rise as a spiral), reading panel on the right; stacked on phones. */
+:root{
+  --bg:#eef1f5; --surface:#ffffff; --surface-2:#f5f7fa; --fg:#172031; --muted:#556073;
+  --line:#cbd2dc; --accent:#2d5bd3; --gold:#b26d12;
+  --f-display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --f-body:"Atkinson Hyperlegible","Segoe UI",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e131c; --surface:#161d2a; --surface-2:#1c2433; --fg:#e7ebf2; --muted:#9aa6b9;
+  --line:#2b3547; --accent:#86a8ff; --gold:#e6ac4c; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e131c; --surface:#161d2a; --surface-2:#1c2433; --fg:#e7ebf2; --muted:#9aa6b9;
+  --line:#2b3547; --accent:#86a8ff; --gold:#e6ac4c; color-scheme:dark}
+
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:16px;line-height:1.55}
+*{box-sizing:border-box}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.app{display:grid;grid-template-rows:auto 1fr;height:100%}
+header{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding-block:12px;padding-inline:16px;border-bottom:1px solid var(--line);background:var(--surface)}
+header h1{font-family:var(--f-display);font-weight:800;font-size:1.25rem;margin:0;letter-spacing:-.01em;text-wrap:balance}
+header h1 span{color:var(--muted);font-weight:500}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--surface-2);border-radius:999px;padding:4px 11px 4px 6px;font-size:.82rem;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.chip b{font-family:var(--f-mono);font-weight:500;font-size:.72rem;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;color:#fff;background:var(--c)}
+.chip[aria-pressed="true"]{border-color:var(--c);box-shadow:inset 0 0 0 1px var(--c)}
+
+.main{display:grid;grid-template-columns:minmax(0,1fr) 400px;min-height:0}
+.stage{position:relative;min-height:0;overflow:hidden}
+.stage canvas{display:block;width:100%;height:100%;cursor:grab}
+.stage canvas:active{cursor:grabbing}
+#labels{position:absolute;inset:0;pointer-events:none}
+.lbl{position:absolute;left:0;top:0;pointer-events:auto;cursor:pointer;white-space:nowrap;border:1px solid var(--c);background:var(--surface);color:var(--fg);border-radius:6px;padding:2px 8px;font-size:.8rem;line-height:1.35;transform-origin:0 50%;will-change:transform}
+.lbl.unit{font-family:var(--f-display);font-weight:700;font-size:.9rem;padding:3px 10px;border-width:2px}
+.lbl.unit small{font-family:var(--f-mono);font-weight:500;color:var(--muted);margin-right:6px;font-size:.7rem}
+.lbl.hub{font-family:var(--f-display);font-weight:800;font-size:1rem;border-color:var(--fg);padding:4px 12px}
+.lbl.concept{font-size:.76rem;border-style:dashed}
+.lbl.sel{background:var(--c);color:#fff;border-style:solid}
+.lbl.sel small{color:#fff}
+.hint{position:absolute;left:16px;bottom:12px;font-size:.78rem;color:var(--muted);background:color-mix(in srgb,var(--surface) 85%,transparent);padding:4px 10px;border-radius:6px;pointer-events:none}
+.tools{position:absolute;right:12px;top:12px;display:flex;flex-direction:column;gap:6px}
+.tool{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 10px;font-size:.8rem;cursor:pointer;text-align:left}
+.tool[aria-pressed="true"]{border-color:var(--gold);color:var(--gold)}
+.legend{position:absolute;left:16px;top:12px;display:flex;flex-direction:column;gap:4px;font-size:.76rem;color:var(--muted);background:color-mix(in srgb,var(--surface) 85%,transparent);padding:6px 10px;border-radius:8px}
+.legend i{display:inline-block;width:22px;height:0;border-top:3px solid var(--gold);vertical-align:middle;margin-right:6px}
+.legend i.dash{border-top:2px dashed var(--muted)}
+
+aside{border-left:1px solid var(--line);background:var(--surface);overflow-y:auto;min-width:0}
+.panel{padding-block:20px 28px;padding-inline:22px;display:flex;flex-direction:column;gap:16px}
+.crumb{display:flex;gap:8px;flex-wrap:wrap}
+.crumb button{border:1px solid var(--line);background:var(--surface-2);border-radius:6px;padding:3px 10px;font-size:.8rem;cursor:pointer}
+.eyebrow{font-family:var(--f-mono);font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;color:var(--c,var(--muted))}
+.panel h2{font-family:var(--f-display);font-weight:800;font-size:1.55rem;line-height:1.15;margin:2px 0 0;text-wrap:balance;letter-spacing:-.01em}
+.panel h3{font-family:var(--f-display);font-weight:700;font-size:1rem;margin:0 0 6px}
+.panel p{margin:0;max-width:62ch}
+.think{border-left:3px solid var(--c,var(--accent));background:var(--surface-2);padding:10px 14px;border-radius:0 8px 8px 0}
+.think b{display:block;font-size:.78rem;color:var(--muted);font-weight:700;margin-bottom:2px}
+.clist{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.clist button{width:100%;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 12px;cursor:pointer;display:flex;justify-content:space-between;gap:10px}
+.clist button:hover{border-color:var(--c)}
+.clist button span:last-child{color:var(--muted)}
+.work{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:6px}
+.work li::marker{color:var(--c,var(--gold))}
+.ex{background:var(--surface-2);border-radius:8px;padding:10px 14px}
+.ex b{display:block;font-size:.78rem;color:var(--muted);margin-bottom:2px}
+.links{display:flex;flex-direction:column;gap:6px}
+.links button{border:1px dashed var(--line);background:none;border-radius:8px;padding:8px 12px;text-align:left;cursor:pointer}
+.links button small{display:block;color:var(--muted);font-size:.8rem}
+.week-table{width:100%;border-collapse:collapse;font-size:.88rem}
+.week-table td{padding:5px 0;border-bottom:1px solid var(--line);vertical-align:top}
+.week-table td:first-child{color:var(--muted);width:42%;padding-right:10px}
+.pn{display:flex;justify-content:space-between;gap:8px;padding-top:6px;border-top:1px solid var(--line)}
+.pn button{border:1px solid var(--line);background:var(--surface-2);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:.85rem}
+.pn button:disabled{opacity:.4;cursor:default}
+.gold{color:var(--gold)}
+
+@media (max-width:860px){
+  .app{display:block;height:auto}
+  .main{display:block}
+  .stage{height:62vh;min-height:360px}
+  aside{border-left:0;border-top:1px solid var(--line)}
+  .panel{padding-inline:16px}
+  .legend{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <h1>AI Applications <span>Course Mind Map</span></h1>
+    <nav class="chips" id="chips" aria-label="Jump to a unit"></nav>
+  </header>
+  <div class="main">
+    <div class="stage" id="stage">
+      <div id="labels"></div>
+      <div class="legend" aria-hidden="true">
+        <div><i></i>Capstone thread</div>
+        <div><i class="dash"></i>Idea that returns in a later unit</div>
+      </div>
+      <div class="tools">
+        <button class="tool" id="tCourse" type="button">Whole course</button>
+        <button class="tool" id="tLinks" type="button" aria-pressed="true">Show connections</button>
+        <button class="tool" id="tSpin" type="button" aria-pressed="false">Slow spin</button>
+      </div>
+      <div class="hint">Drag to turn. Scroll or pinch to zoom. Click any sphere or label.</div>
+    </div>
+    <aside aria-live="polite"><div class="panel" id="panel"></div></aside>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+/* ---------------- Course content ---------------- */
+const COLORS=['#3b7fc4','#14998f','#d14b35','#7a58d4','#2e9a4c','#cf8417','#c03d7c','#4f6a8f'];
+const UNITS=[
+ {n:0,short:'Foundations',title:'Introduction to AI Concepts and Technologies',week:'Week 0',dates:'Oct 14 to Oct 20',
+  sum:'What AI is, what it is not, and how the main families of AI fit inside each other.',
+  think:'Where did an AI system make a decision for you this week without asking you first?',
+  concepts:[
+   {id:'ai',name:'Artificial intelligence',def:'Software that does tasks that normally need human judgment, such as recognizing a face or answering a question.',ex:'Your email provider moves a phishing message to the spam folder before you see it.'},
+   {id:'ml',name:'Machine learning',def:'AI that learns patterns from examples instead of following rules a programmer wrote by hand.',ex:'A bank model studies thousands of past transactions marked "fraud" or "not fraud" and learns to flag new ones.'},
+   {id:'dl',name:'Deep learning',def:'Machine learning that uses neural networks with many layers. It drives most speech and image recognition.',ex:'Your phone unlocks when it recognizes your face, even with glasses on.'},
+   {id:'genai',name:'GenAI',def:'Generative AI. Models that create new text, images, audio, or code from a prompt.',ex:'A student asks a chatbot to quiz them on this week\'s reading.'},
+   {id:'train',name:'Training vs. inference',def:'Training is when a model learns from data. Inference is when the finished model makes a prediction on data it has not seen.',ex:'A model trained on last year\'s maintenance logs predicts which aircraft part fails next.'},
+   {id:'learn',name:'Three ways models learn',def:'Supervised learning uses labeled answers. Unsupervised learning finds groups on its own. Reinforcement learning improves through rewards.',ex:'Labeled X-rays (supervised), customer groups (unsupervised), a game-playing agent (reinforcement).'}],
+  work:['Meet Your Classmates post','Discussion 0: a current AI article in your field, analyzed with GenAI Socratic prompting. Due 6:00 PM JST at the start of the first class.','Capstone Week 0 piece: start thinking about your field and your organization']},
+ {n:1,short:'Applications',title:'AI Applications Across Multiple Domains',week:'Week 1',dates:'Oct 20 to Oct 27',
+  sum:'Every field reuses the same few AI problem types. Name the problem type first. Pick the tool second.',
+  think:'What problem in your field could AI help solve, and which problem type is it?',
+  concepts:[
+   {id:'class',name:'Classification',def:'Sorting an item into one of a set of categories.',ex:'A system labels each loan application "approve" or "review".'},
+   {id:'regr',name:'Regression',def:'Predicting a number instead of a category.',ex:'Forecasting next month\'s fuel use for a fleet of vehicles.'},
+   {id:'clust',name:'Clustering',def:'Finding natural groups in data that has no labels.',ex:'A store discovers five groups of shoppers by what they buy and when.'},
+   {id:'rec',name:'Recommendation',def:'Ranking items a person is likely to want, based on what they and similar people chose.',ex:'A streaming service lines up the next show for you.'},
+   {id:'cvnlp',name:'Vision and language',def:'Computer vision reads images and video. Natural language processing (NLP) reads and writes text and speech.',ex:'Spotting corrosion in inspection photos. Summarizing a 40-page incident report.'},
+   {id:'crisp',name:'CRISP-DM',def:'A six-step process for data projects: business understanding, data understanding, data preparation, modeling, evaluation, deployment.',ex:'A hospital uses the six steps to plan, build, and test a model that predicts which patients return within 30 days.'}],
+  work:['In-class escape room. Every team member uploads the team certificate to the LEO dropbox.']},
+ {n:2,short:'Ethics & Law',title:'Ethical and Legal Considerations in AI',week:'Week 2',dates:'Oct 27 to Nov 3',
+  sum:'Who is helped, who is harmed, and who answers for it when an AI system makes a decision.',
+  think:'Who should sign off before an AI system goes live, and what should that person check?',
+  concepts:[
+   {id:'frame',name:'Ethical frameworks',def:'Three common lenses. Utilitarian: choose the best outcome for the most people. Duty-based: follow rules and respect rights. Virtue: act as a good person would.',ex:'The trolley problem: a train engineer chooses between hitting a group of people or one person.'},
+   {id:'fair',name:'Fairness',def:'Comparative fairness checks whether groups are treated alike. Non-comparative fairness checks whether each person got what they deserve.',ex:'A risk score flags one group as "high risk" twice as often as another group with the same record.'},
+   {id:'priv',name:'Privacy and data governance',def:'Rules for what data is collected, who sees it, how long it is kept, and what it may be used for.',ex:'A fitness app sells location data that reveals where users live and work.'},
+   {id:'tea',name:'Transparency and accountability',def:'Transparency: people know AI is in use. Explainability: the system can give reasons. Accountability: a named person answers for the result.',ex:'A rejected job applicant receives the main reasons the screening tool scored them low.'},
+   {id:'safe',name:'Safety and security',def:'Keeping AI systems from causing physical harm and from being tricked or attacked.',ex:'Small stickers on a stop sign cause a vision system to read it as a speed-limit sign.'},
+   {id:'work2',name:'Work, environment, do no harm',def:'AI changes jobs and uses large amounts of energy and water. Proportionality means the benefit must justify the risk.',ex:'Automating a call center saves money. Who loses work, and what replaces it?'},
+   {id:'gov',name:'Global AI governance',def:'Laws and standards that set rules for AI. The EU AI Act sorts AI systems by risk level and places the strictest rules on high-risk uses.',ex:'An AI hiring tool sold in Europe needs human oversight and documented testing.'}],
+  work:['Project: The Sign-Off. Test a scoring model\'s cutoff, sign a deploy decision, and write a memo that cites the assigned scholarly papers in APA 7.']},
+ {n:3,short:'Tools',title:'Introduction to AI Tools and Implementation Approaches',week:'Week 3',dates:'Nov 3 to Nov 10',
+  sum:'Cloud vendors sell AI as ready-made services, as platforms for building your own models, and as APIs. Picking one is a business decision as much as a technical one.',
+  think:'When should an organization buy an AI service, and when should it build its own model?',
+  concepts:[
+   {id:'cloud',name:'Cloud AI platforms',def:'AI tools rented from a vendor\'s data centers instead of run on your own computers.',ex:'Amazon Web Services (SageMaker, Rekognition, Comprehend) and Microsoft Azure (Azure AI services, Azure Machine Learning).'},
+   {id:'prebuilt',name:'Prebuilt AI services',def:'Models the vendor already trained. You send data and get an answer back with no training on your part.',ex:'Translating a support ticket from Japanese to English.'},
+   {id:'api',name:'API',def:'Application programming interface. A defined way for one program to send a request to another program and get an answer back.',ex:'A base housing app sends a photo of a damaged wall to a vision API and receives the label "water damage".'},
+   {id:'nocode',name:'No-code and low-code tools',def:'Tools that build models through menus and drag-and-drop instead of programming.',ex:'An analyst uploads a spreadsheet and trains a forecast model without writing code.'},
+   {id:'build',name:'Build vs. buy',def:'Buying is faster and cheaper to start. Building gives control and fits unusual data. Most organizations mix both.',ex:'A small clinic buys a transcription service. A large bank builds its own fraud model.'},
+   {id:'deploy',name:'Cost and deployment',def:'Where the model runs, who maintains it, and how the price grows as use grows.',ex:'A pay-per-call API costs $40 a month in testing and $9,000 a month after launch.'}],
+  work:[]},
+ {n:4,short:'Data',title:'Data Selection and Preparation for AI Applications',week:'Week 4',dates:'Nov 10 to Nov 17',
+  sum:'A model learns only what its data shows it. Dirty or one-sided data produces confident, wrong answers.',
+  think:'What would go wrong if the data behind a decision about you were missing or wrong?',
+  concepts:[
+   {id:'select',name:'Data selection',def:'Choosing data that matches the question and the people the model will serve.',ex:'Using only summer sales to predict winter demand leaves the model blind to the holidays.'},
+   {id:'quality',name:'Data quality problems',def:'Missing values, duplicate rows, typos, mixed formats, and impossible values.',ex:'A patient\'s age is recorded as 210. Dates appear as 11/10/26 in one column and 2026-11-10 in another.'},
+   {id:'clean',name:'Data cleaning',def:'Finding and fixing quality problems before training, then retraining and checking whether results improved.',ex:'Removing duplicate customer records raises a churn model\'s accuracy.'},
+   {id:'bias',name:'Bias in data',def:'Data that leaves out or underrepresents a group, so the model works worse for that group.',ex:'A face recognition system trained mostly on lighter-skinned faces misidentifies darker-skinned faces more often.'},
+   {id:'feat',name:'Features and labels',def:'Features are the inputs a model uses. The label is the answer it learns to predict.',ex:'Square footage and zip code (features) predict sale price (label).'},
+   {id:'split',name:'Training and test split',def:'Holding back part of the data so you can test the model on examples it never saw.',ex:'Train on 80% of the records, then measure accuracy on the other 20%.'}],
+  work:['Data cleaning project: find the problems in a made-up dataset, clean it, retrain the model, and explain with a reference why cleaning matters.']},
+ {n:5,short:'Insights',title:'Interpreting and Applying AI-Generated Insights',week:'Week 5',dates:'Nov 17 to Nov 24',
+  sum:'AI output is a claim to check, not a fact. Learn to read scores, cutoffs, and errors before you act on them.',
+  think:'How would you know if an AI tool\'s answer were wrong?',
+  concepts:[
+   {id:'conf',name:'Scores and confidence',def:'Many AI tools return a number that shows how strongly the model leans toward an answer. A high score is not proof.',ex:'A tool rates a customer message 92 out of 100 for "angry".'},
+   {id:'sent',name:'Language analysis',def:'Cloud services that read text for sentiment, key phrases, topics, and named people or places.',ex:'Sorting 5,000 survey comments into complaints, praise, and questions.'},
+   {id:'errors',name:'False positives and negatives',def:'A false positive flags something that is fine. A false negative misses something that is a problem.',ex:'A spam filter that blocks your paycheck notice (false positive) or lets a scam through (false negative).'},
+   {id:'cut',name:'Thresholds',def:'The cutoff score where the system switches its decision. Moving it trades one kind of error for the other.',ex:'Flagging every message above 70 catches more threats and buries staff in false alarms.'},
+   {id:'halluc',name:'Hallucination',def:'GenAI stating false information in fluent, confident language.',ex:'A chatbot cites a journal article that does not exist.'},
+   {id:'human',name:'Human review',def:'A person checks AI output before it affects someone, especially for high-stakes or low-confidence cases.',ex:'A nurse reviews every patient the triage model marks "low priority".'}],
+  work:['Project: Audit the Machine. Score a message set by hand, run the same set through a GenAI tool, compare, and write a one-page memo.']},
+ {n:6,short:'Domains',title:'Domain-Specific AI Applications and Case Studies',week:'Week 6',dates:'Nov 24 to Dec 1',
+  sum:'A model built in one setting can fail in another. Knowledge of the field explains why.',
+  think:'What does an expert in your field know that a model trained somewhere else would miss?',
+  concepts:[
+   {id:'dom',name:'Domain knowledge',def:'What people who work in a field know about its data, its rules, and its exceptions.',ex:'A coach knows a resting heart rate of 45 is normal for an athlete. A general model flags it as a problem.'},
+   {id:'shift',name:'Distribution shift',def:'The data a model sees in real use differs from the data it was trained on, so accuracy drops.',ex:'A model trained at a large city hospital performs worse at a rural clinic with older patients.'},
+   {id:'transfer',name:'Transfer learning',def:'Starting from a model trained on one task and adjusting it for a new task with less data.',ex:'A general image model is fine-tuned to read dental X-rays.'},
+   {id:'brief',name:'Domain context in prompts',def:'GenAI output improves when the prompt tells the model the setting, the audience, and the field\'s rules.',ex:'The same prompt run with and without a one-paragraph domain brief gives very different answers.'},
+   {id:'case',name:'Case study analysis',def:'Breaking a real deployment into problem, data, model, results, and harms.',ex:'Why a retailer\'s demand model failed when buying habits changed overnight in 2020.'}],
+  work:['Discussion: Blind vs. Briefed. Run one GenAI prompt twice, without and with a domain brief, and post both results.','Project: The Transfer Test. Move a model from one site to another in the tool and write a one-page memo.']},
+ {n:7,short:'Capstone build',title:'Comprehensive AI Implementation and Ethical Considerations',week:'Week 7',dates:'Dec 1 to Dec 8',
+  sum:'Put every unit together into one AI solution for an organization in your field, then defend it.',
+  think:'Could you defend every choice in your solution to the person it affects most?',
+  concepts:[
+   {id:'prob',name:'Problem statement',def:'The business problem, the people affected, and the AI problem type that fits.',ex:'A fictional regional clinic wants to cut missed appointments by predicting who is likely to miss one.'},
+   {id:'dplan',name:'Data plan',def:'What data you need, where it comes from, how you clean it, and who is missing from it.',ex:'Two years of appointment records with duplicates removed and phone numbers masked.'},
+   {id:'tool',name:'Tool choice',def:'Which platform or service you use, and why you chose to build or buy.',ex:'A prebuilt cloud forecasting service, with a reason given for each alternative you rejected.'},
+   {id:'eth',name:'Ethics review',def:'Fairness, privacy, and accountability checks, with a named owner for the decision.',ex:'Testing whether the model flags one neighborhood far more often than others.'},
+   {id:'eval',name:'Evaluation plan',def:'How you measure success, which errors matter most, and where a person reviews results.',ex:'Track missed appointments monthly. Staff call flagged patients. No one is penalized by the model alone.'},
+   {id:'comm',name:'Communicating limits',def:'Explaining what the system can and cannot do to people who are not technical.',ex:'A one-page brief for clinic managers that states the model\'s error rate in plain numbers.'}],
+  work:['Capstone final paper due December 8, the last day of class.']}
+];
+const CAPSTONE={
+  title:'Capstone Project',
+  sum:'A semester project that runs through every unit. You create a company or organization in a field you choose and design an AI solution for it using every course topic. It does not need to be long. It needs to tie everything together in one field.',
+  steps:['Week 0: choose your field and start your organization','Each week: upload your progress to the capstone dropbox (not graded)','Turn-In 1 and Turn-In 2: graded checkpoints','Final paper: due December 8'],
+  pts:'200 points'
+};
+/* Ideas that return in a later unit: [fromUnit, conceptId, toUnit, conceptId, why] */
+const LINKS=[
+ [0,'ml',4,'feat','Machine learning learns from features and labels. Unit 4 shows how those are chosen and cleaned.'],
+ [0,'train',4,'split','Training vs. inference returns as the training and test split.'],
+ [1,'class',5,'errors','Every classifier makes false positives and false negatives.'],
+ [1,'crisp',7,'prob','CRISP-DM starts with business understanding, which becomes your capstone problem statement.'],
+ [1,'cvnlp',3,'prebuilt','Vision and language tasks are what most prebuilt cloud services sell.'],
+ [2,'fair',4,'bias','Unfair outcomes often start as biased data.'],
+ [2,'tea',5,'human','Accountability needs a person who reviews AI output.'],
+ [2,'frame',7,'eth','The ethical frameworks become your capstone ethics review.'],
+ [3,'build',7,'tool','Build vs. buy becomes your capstone tool choice.'],
+ [4,'split',6,'shift','A test split only checks data like the training data. Distribution shift is what happens outside it.'],
+ [5,'cut',2,'fair','Moving a threshold changes who gets flagged, which is a fairness decision.'],
+ [5,'halluc',6,'brief','Domain context in a prompt reduces some GenAI errors.'],
+ [6,'dom',7,'comm','Domain knowledge lets you explain limits in your field\'s own terms.']
+];
+const COURSE={
+  outcomes:['Understand how AI technologies work and the problems they can solve','Evaluate AI tools and services for specific applications','Apply AI solutions to real-world challenges in various domains','Consider ethical implications and make responsible decisions about AI implementation','Communicate effectively about AI capabilities and limitations to diverse stakeholders'],
+  rhythm:[['Class','Tuesday, 6 to 9 PM, with an AI Lab Sprint'],['Discussion post','Sunday, 6 PM JST'],['Quiz','Monday'],['Project','Tuesday, 12 noon JST'],['Discussion replies','Tuesday, 6 PM JST']]
+};
+
+/* ---------------- Helpers ---------------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+/* ---------------- Scene ---------------- */
+const stage=$('#stage'), labelsEl=$('#labels');
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+stage.prepend(renderer.domElement);
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(50,1,0.1,500);
+const HOME={pos:new THREE.Vector3(0,7,30),target:new THREE.Vector3(0,0,0)};
+camera.position.copy(HOME.pos);
+const controls=new THREE.OrbitControls(camera,renderer.domElement);
+controls.enableDamping=true; controls.dampingFactor=.08; controls.minDistance=4; controls.maxDistance=70;
+controls.autoRotateSpeed=0.6;
+scene.add(new THREE.AmbientLight(0xffffff,.65));
+const sun=new THREE.DirectionalLight(0xffffff,.75); sun.position.set(10,20,15); scene.add(sun);
+
+const nodes=[]; // {mesh,label,kind,u,c,pos}
+const sphereGeo=new THREE.SphereGeometry(1,32,24);
+function makeLabel(html,kind,color,onClick){
+  const b=document.createElement('button'); b.type='button'; b.className='lbl '+kind; b.innerHTML=html;
+  b.style.setProperty('--c',color); b.addEventListener('click',onClick); labelsEl.appendChild(b); return b;
+}
+function addNode(pos,r,color,kind,labelHtml,onClick,data){
+  const mat=new THREE.MeshStandardMaterial({color,roughness:.45,metalness:.1,emissive:color,emissiveIntensity:.12});
+  const mesh=new THREE.Mesh(sphereGeo,mat); mesh.scale.setScalar(r); mesh.position.copy(pos); scene.add(mesh);
+  const label=makeLabel(labelHtml,kind,color,onClick);
+  const n=Object.assign({mesh,label,kind,pos:pos.clone(),r,onClick},data); mesh.userData.node=n; nodes.push(n); return n;
+}
+const lineMats=[];
+function line(a,b,color,opacity,dashed){
+  const g=new THREE.BufferGeometry().setFromPoints([a,b]);
+  const m=dashed?new THREE.LineDashedMaterial({color,dashSize:.35,gapSize:.25,transparent:true,opacity})
+                :new THREE.LineBasicMaterial({color,transparent:true,opacity});
+  const l=new THREE.Line(g,m); if(dashed) l.computeLineDistances(); scene.add(l); lineMats.push(m); return l;
+}
+
+/* Hub */
+const hub=addNode(new THREE.Vector3(0,0,0),1.5,css('--fg')||'#172031','hub','AI Applications',()=>showCourse(),{});
+/* Units on a rising spiral: one turn of the course, Week 0 at the bottom */
+const R=10, unitNodes=[], conceptMap={};
+UNITS.forEach((u,i)=>{
+  const a=i/UNITS.length*Math.PI*2 - Math.PI/2;
+  const p=new THREE.Vector3(Math.cos(a)*R,(i-3.5)*1.9,Math.sin(a)*R);
+  u.color=COLORS[i]; u.pos=p;
+  const un=addNode(p,0.95,u.color,'unit',`<small>U${u.n}</small>${esc(u.short)}`,()=>showUnit(i),{u:i});
+  unitNodes.push(un);
+  line(new THREE.Vector3(0,0,0),p,u.color,.35,false);
+  // concepts: fan outward and around the unit
+  const out=new THREE.Vector3(p.x,0,p.z).normalize(), up=new THREE.Vector3(0,1,0), side=new THREE.Vector3().crossVectors(up,out);
+  const k=u.concepts.length;
+  u.concepts.forEach((c,j)=>{
+    const t=(j/(k-1))*2-1; // -1..1
+    const ang=t*1.25;
+    const cp=p.clone().add(out.clone().multiplyScalar(2.6+Math.cos(ang)*0.9)).add(side.clone().multiplyScalar(Math.sin(ang)*3.0)).add(up.clone().multiplyScalar(((j%2)?0.9:-0.9)));
+    const cn=addNode(cp,0.36,u.color,'concept',esc(c.name),()=>showConcept(i,c.id),{u:i,c:c.id});
+    conceptMap[u.n+':'+c.id]=cn;
+    line(p,cp,u.color,.55,false);
+  });
+});
+/* Capstone thread: a gold tube through every unit */
+const curve=new THREE.CatmullRomCurve3(UNITS.map(u=>u.pos.clone().multiplyScalar(1.0).add(new THREE.Vector3(0,1.15,0))));
+const threadMat=new THREE.MeshStandardMaterial({color:css('--gold')||'#b26d12',emissive:css('--gold')||'#b26d12',emissiveIntensity:.35,roughness:.4});
+const thread=new THREE.Mesh(new THREE.TubeGeometry(curve,200,0.09,10,false),threadMat); scene.add(thread);
+const capPos=UNITS[7].pos.clone().add(new THREE.Vector3(0,2.4,0));
+const capNode=addNode(capPos,0.55,css('--gold')||'#b26d12','unit','<small>200 pts</small>Capstone',()=>showCapstone(),{cap:true});
+line(UNITS[7].pos.clone().add(new THREE.Vector3(0,1.15,0)),capPos,css('--gold')||'#b26d12',.8,false);
+
+/* Cross-unit connections */
+const linkLines=new THREE.Group(); scene.add(linkLines);
+LINKS.forEach(([fu,fc,tu,tc])=>{
+  const a=conceptMap[fu+':'+fc].pos, b=conceptMap[tu+':'+tc].pos;
+  const mid=a.clone().add(b).multiplyScalar(.5).multiplyScalar(.55); // bow toward the hub
+  const pts=new THREE.QuadraticBezierCurve3(a,mid,b).getPoints(40);
+  const g=new THREE.BufferGeometry().setFromPoints(pts);
+  const m=new THREE.LineDashedMaterial({color:css('--muted')||'#556073',dashSize:.3,gapSize:.22,transparent:true,opacity:.55});
+  const l=new THREE.Line(g,m); l.computeLineDistances(); linkLines.add(l); l.userData={fu,fc,tu,tc,m};
+});
+
+/* ---------------- Theme sync ---------------- */
+function applyTheme(){
+  scene.background=new THREE.Color(css('--bg')||'#eef1f5');
+  const fg=css('--fg'), gold=css('--gold'), muted=css('--muted');
+  hub.mesh.material.color.set(fg); hub.mesh.material.emissive.set(fg); hub.label.style.setProperty('--c',fg);
+  threadMat.color.set(gold); threadMat.emissive.set(gold);
+  capNode.mesh.material.color.set(gold); capNode.mesh.material.emissive.set(gold); capNode.label.style.setProperty('--c',gold);
+  linkLines.children.forEach(l=>l.userData.m.color.set(muted));
+}
+applyTheme();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',applyTheme);
+new MutationObserver(applyTheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+
+/* ---------------- Camera moves ---------------- */
+let tween=null;
+function flyTo(pos,target){
+  if(reduce){camera.position.copy(pos);controls.target.copy(target);controls.update();return;}
+  tween={p0:camera.position.clone(),t0:controls.target.clone(),p1:pos,t1:target,s:performance.now(),d:900};
+}
+function unitView(i){
+  const p=UNITS[i].pos, out=new THREE.Vector3(p.x,0,p.z).normalize();
+  return {pos:p.clone().add(out.multiplyScalar(13)).add(new THREE.Vector3(0,3,0)),target:p.clone().add(new THREE.Vector3(p.x,0,p.z).normalize().multiplyScalar(2))};
+}
+
+/* ---------------- State and panel ---------------- */
+let focusUnit=null, selConcept=null;
+const chips=$('#chips');
+UNITS.forEach((u,i)=>{
+  const b=document.createElement('button'); b.type='button'; b.className='chip'; b.style.setProperty('--c',u.color);
+  b.innerHTML=`<b>${u.n}</b>${esc(u.short)}`; b.setAttribute('aria-pressed','false'); b.onclick=()=>showUnit(i); chips.appendChild(b);
+});
+function markSelection(){
+  [...chips.children].forEach((b,i)=>b.setAttribute('aria-pressed',String(i===focusUnit)));
+  nodes.forEach(n=>{
+    const on=(n.kind==='unit'&&!n.cap&&n.u===focusUnit&&!selConcept)||(n.kind==='concept'&&n.u===focusUnit&&n.c===selConcept)||(n.cap&&focusUnit==='cap');
+    n.label.classList.toggle('sel',!!on);
+  });
+  linkLines.children.forEach(l=>{
+    const d=l.userData, rel=focusUnit===null||focusUnit==='cap'||d.fu===focusUnit||d.tu===focusUnit;
+    const hot=selConcept&&((d.fu===focusUnit&&d.fc===selConcept)||(d.tu===focusUnit&&d.tc===selConcept));
+    d.m.opacity=hot?1:(rel?.55:.12);
+  });
+}
+const panel=$('#panel');
+function pn(i){
+  return `<div class="pn"><button type="button" ${i<=0?'disabled':''} onclick="showUnit(${i-1})">Previous unit</button><button type="button" ${i>=UNITS.length-1?'disabled':''} onclick="showUnit(${i+1})">Next unit</button></div>`;
+}
+function showCourse(){
+  focusUnit=null; selConcept=null; markSelection(); flyTo(HOME.pos.clone(),HOME.target.clone());
+  panel.style.removeProperty('--c');
+  panel.innerHTML=`
+    <div><div class="eyebrow">Fall 2026 · Oct 14 to Dec 8</div><h2>AI Applications: the whole course</h2></div>
+    <p>Eight units rise in a spiral, one per week, from Week 0 at the bottom to Week 7 at the top. Each unit branches into its key ideas. The gold thread is your capstone, which grows a little every week. Dashed lines show ideas that come back in a later unit.</p>
+    <div><h3>Units</h3><ul class="clist">${UNITS.map((u,i)=>`<li><button type="button" style="--c:${u.color}" onclick="showUnit(${i})"><span><b style="color:${u.color}">Unit ${u.n}</b> ${esc(u.title)}</span><span>${u.week}</span></button></li>`).join('')}
+      <li><button type="button" style="--c:var(--gold)" onclick="showCapstone()"><span><b class="gold">Capstone</b> Runs all semester</span><span>200 pts</span></button></li></ul></div>
+    <div><h3>Every week</h3><table class="week-table"><tbody>${COURSE.rhythm.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('')}</tbody></table></div>
+    <div><h3>By the end of the course you can</h3><ul class="work">${COURSE.outcomes.map(o=>`<li>${esc(o)}</li>`).join('')}</ul></div>`;
+}
+function showUnit(i){
+  const u=UNITS[i]; focusUnit=i; selConcept=null; markSelection();
+  const v=unitView(i); flyTo(v.pos,v.target);
+  panel.style.setProperty('--c',u.color);
+  const rel=LINKS.filter(l=>l[0]===i||l[2]===i);
+  panel.innerHTML=`
+    <div class="crumb"><button type="button" onclick="showCourse()">Whole course</button></div>
+    <div><div class="eyebrow">Unit ${u.n} · ${u.week} · ${u.dates}</div><h2>${esc(u.title)}</h2></div>
+    <p>${esc(u.sum)}</p>
+    <div class="think"><b>Think about this through the unit</b>${esc(u.think)}</div>
+    <div><h3>Key ideas</h3><ul class="clist">${u.concepts.map(c=>`<li><button type="button" onclick="showConcept(${i},'${c.id}')"><span>${esc(c.name)}</span><span>Open</span></button></li>`).join('')}</ul></div>
+    ${u.work.length?`<div><h3>Named work this unit</h3><ul class="work">${u.work.map(w=>`<li>${esc(w)}</li>`).join('')}</ul></div>`:''}
+    ${rel.length?`<div><h3>Connections to other units</h3><div class="links">${rel.map(l=>{const other=l[0]===i?l[2]:l[0];const oc=l[0]===i?l[3]:l[1];const cname=UNITS[other].concepts.find(c=>c.id===oc).name;return `<button type="button" onclick="showConcept(${other},'${oc}')">Unit ${other}: ${esc(cname)}<small>${esc(l[4])}</small></button>`}).join('')}</div></div>`:''}
+    ${pn(i)}`;
+}
+function showConcept(i,cid){
+  const u=UNITS[i], c=u.concepts.find(x=>x.id===cid); focusUnit=i; selConcept=cid; markSelection();
+  const n=conceptMap[u.n+':'+cid], out=new THREE.Vector3(n.pos.x,0,n.pos.z).normalize();
+  flyTo(n.pos.clone().add(out.multiplyScalar(8)).add(new THREE.Vector3(0,2,0)),n.pos.clone());
+  panel.style.setProperty('--c',u.color);
+  const rel=LINKS.filter(l=>(l[0]===i&&l[1]===cid)||(l[2]===i&&l[3]===cid));
+  panel.innerHTML=`
+    <div class="crumb"><button type="button" onclick="showCourse()">Whole course</button><button type="button" onclick="showUnit(${i})">Unit ${u.n}: ${esc(u.short)}</button></div>
+    <div><div class="eyebrow">Unit ${u.n} · Key idea</div><h2>${esc(c.name)}</h2></div>
+    <p>${esc(c.def)}</p>
+    <div class="ex"><b>Example</b>${esc(c.ex)}</div>
+    ${rel.length?`<div><h3>Where this comes back</h3><div class="links">${rel.map(l=>{const other=l[0]===i?l[2]:l[0];const oc=l[0]===i?l[3]:l[1];const cname=UNITS[other].concepts.find(x=>x.id===oc).name;return `<button type="button" onclick="showConcept(${other},'${oc}')">Unit ${other}: ${esc(cname)}<small>${esc(l[4])}</small></button>`}).join('')}</div></div>`:''}
+    <div><h3>Other ideas in Unit ${u.n}</h3><ul class="clist">${u.concepts.filter(x=>x.id!==cid).map(x=>`<li><button type="button" onclick="showConcept(${i},'${x.id}')"><span>${esc(x.name)}</span><span>Open</span></button></li>`).join('')}</ul></div>`;
+}
+function showCapstone(){
+  focusUnit='cap'; selConcept=null; markSelection();
+  flyTo(new THREE.Vector3(capPos.x*2.1,capPos.y+5,capPos.z*2.1+4),new THREE.Vector3(0,2,0));
+  panel.style.setProperty('--c',css('--gold'));
+  panel.innerHTML=`
+    <div class="crumb"><button type="button" onclick="showCourse()">Whole course</button></div>
+    <div><div class="eyebrow">Runs all semester · ${CAPSTONE.pts}</div><h2>${CAPSTONE.title}</h2></div>
+    <p>${esc(CAPSTONE.sum)}</p>
+    <div><h3>Schedule</h3><ul class="work">${CAPSTONE.steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ul></div>
+    <div><h3>What each unit adds</h3><ul class="clist">${UNITS.map((u,i)=>`<li><button type="button" style="--c:${u.color}" onclick="showUnit(${i})"><span><b style="color:${u.color}">Unit ${u.n}</b> ${esc(u.short)}</span><span>${u.week}</span></button></li>`).join('')}</ul></div>
+    <p class="think"><b>Think about this all semester</b>Pick a field you know. The more you know about it, the better your data, ethics, and evaluation choices will be.</p>`;
+}
+window.showUnit=showUnit; window.showConcept=showConcept; window.showCourse=showCourse; window.showCapstone=showCapstone;
+
+/* ---------------- Tools ---------------- */
+$('#tCourse').onclick=showCourse;
+$('#tLinks').onclick=e=>{const on=e.currentTarget.getAttribute('aria-pressed')!=='true';e.currentTarget.setAttribute('aria-pressed',String(on));linkLines.visible=on;};
+const spinBtn=$('#tSpin');
+if(reduce) spinBtn.hidden=true;
+spinBtn.onclick=()=>{controls.autoRotate=!controls.autoRotate;spinBtn.setAttribute('aria-pressed',String(controls.autoRotate));};
+controls.addEventListener('start',()=>{tween=null;});
+
+/* Click spheres in the scene */
+const ray=new THREE.Raycaster(), mouse=new THREE.Vector2(); let down=null;
+renderer.domElement.addEventListener('pointerdown',e=>{down=[e.clientX,e.clientY];});
+renderer.domElement.addEventListener('pointerup',e=>{
+  if(!down||Math.hypot(e.clientX-down[0],e.clientY-down[1])>5) return;
+  const r=renderer.domElement.getBoundingClientRect();
+  mouse.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);
+  ray.setFromCamera(mouse,camera);
+  const hit=ray.intersectObjects(nodes.map(n=>n.mesh))[0];
+  if(hit) hit.object.userData.node.onClick();
+});
+
+/* ---------------- Resize and render ---------------- */
+function resize(){
+  const w=stage.clientWidth,h=stage.clientHeight; renderer.setSize(w,h,false);
+  renderer.domElement.style.width=w+'px'; renderer.domElement.style.height=h+'px';
+  camera.aspect=w/h; camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(stage); resize();
+
+const v=new THREE.Vector3(), camDir=new THREE.Vector3();
+function placeLabels(){
+  const w=stage.clientWidth,h=stage.clientHeight;
+  nodes.forEach(n=>{
+    const show=n.kind!=='concept'||n.u===focusUnit;
+    v.copy(n.pos); v.y+=n.r+0.15; v.project(camera);
+    if(!show||v.z>1||v.z<-1){n.label.hidden=true;return;}
+    n.label.hidden=false;
+    const x=(v.x*.5+.5)*w, y=(-v.y*.5+.5)*h;
+    const dist=camera.position.distanceTo(n.pos);
+    const s=Math.max(.7,Math.min(1.1,22/dist));
+    n.label.style.transform=`translate(${x+8}px,${y}px) translateY(-50%) scale(${s})`;
+    n.label.style.opacity=String(Math.max(.35,Math.min(1,30/dist)));
+    n.label.style.zIndex=String(1000-Math.round(dist*10));
+  });
+}
+function ease(t){return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2}
+function loop(now){
+  if(tween){
+    const t=Math.min(1,(now-tween.s)/tween.d), k=ease(t);
+    camera.position.lerpVectors(tween.p0,tween.p1,k); controls.target.lerpVectors(tween.t0,tween.t1,k);
+    if(t>=1) tween=null;
+  }
+  // dim concepts outside the focused unit
+  nodes.forEach(n=>{ if(n.kind==='concept'){ const on=focusUnit===null||focusUnit==='cap'||n.u===focusUnit; n.mesh.material.opacity=on?1:.3; n.mesh.material.transparent=!on; } });
+  controls.update(); renderer.render(scene,camera); placeLabels();
+  requestAnimationFrame(loop);
+}
+showCourse(); if(!reduce) tween=null; camera.position.copy(HOME.pos); controls.target.copy(HOME.target);
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
