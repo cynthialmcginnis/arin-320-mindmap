@@ -13,7 +13,7 @@ An interactive 3D mind map of an eight-unit course on artificial intelligence ap
 1. Put `index.html` in the root of a repository.
 2. In the repository, open **Settings > Pages**.
 3. Under **Source**, choose **Deploy from a branch**, pick `main` and `/ (root)`, and save.
-4. The page appears at `https://<your-username>.github.io/<repository-name>/` within a few minutes.
+4. The page appears at `https://cynthialmcginnis.github.io/arin-320-mindmap/` within a few minutes.
 
 ## Edit the content
 
